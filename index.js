@@ -1,4 +1,6 @@
 const express = require("express");
+const dotenv = require("dotenv");
+dotenv.config();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const app = express();
@@ -11,8 +13,7 @@ app.use(express.json());
 // SmartDealsUser
 // V640KZxnQX5kkfNX
 
-const uri =
-	"mongodb+srv://SmartDealsUser:V640KZxnQX5kkfNX@cluster0.x65kkeb.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x65kkeb.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
 	serverApi: {
@@ -29,6 +30,15 @@ app.get("/", (req, res) => {
 async function run() {
 	try {
 		await client.connect();
+		const database = client.db("Smart_Deals_db");
+		const productsCollection = database.collection("products");
+
+		// Products Related API's
+		app.post("/products", async (req, res) => {
+			const newProduct = req.body;
+			const result = await productsCollection.insertOne(newProduct);
+			res.send(result);
+		});
 
 		await client.db("admin").command({ ping: 1 });
 		console.log(
