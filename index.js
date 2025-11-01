@@ -29,6 +29,7 @@ async function run() {
 		await client.connect();
 		const database = client.db("Smart_Deals_db");
 		const productsCollection = database.collection("products");
+		const bidsCollection = database.collection("bids");
 
 		// Products Related API's
 		// All Products
@@ -96,6 +97,23 @@ async function run() {
 			const id = req.params.id;
 			const query = { _id: new ObjectId(id) };
 			const result = await productsCollection.deleteOne(query);
+			res.send(result);
+		});
+
+		// Bid's API's
+		app.post("/bids", async (req, res) => {
+			const newBid = req.body;
+			const query = {
+				product: newBid.product,
+				buyer_email: newBid.buyer_email,
+			};
+
+			const existingBid = await bidsCollection.findOne(query);
+			if (existingBid) {
+				return res.status(400).send({ message: "Already bidded" });
+			}
+
+			const result = await bidsCollection.insertOne(newBid);
 			res.send(result);
 		});
 
