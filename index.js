@@ -45,6 +45,23 @@ async function run() {
 			res.send(result);
 		});
 
+		// Get Recent Products
+		app.get("/recent-products", async (req, res) => {
+			const projectFields = {
+				title: 1,
+				price_min: 1,
+				price_max: 1,
+				image: 1,
+			};
+			const cursor = productsCollection
+				.find()
+				.project(projectFields)
+				.sort({ created_at: -1 })
+				.limit(6);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+
 		// Single Product By ID
 		app.get("/products/:id", async (req, res) => {
 			const id = req.params.id;
