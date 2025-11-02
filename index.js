@@ -112,6 +112,13 @@ async function run() {
 			res.send(result);
 		});
 
+		app.get("/bids/:id", async (req, res) => {
+			const { id } = req.params;
+			const query = { product: id };
+			const result = await bidsCollection.find(query).toArray();
+			res.send(result);
+		});
+
 		app.post("/bids", async (req, res) => {
 			const newBid = req.body;
 			const query = {
@@ -125,6 +132,13 @@ async function run() {
 			}
 
 			const result = await bidsCollection.insertOne(newBid);
+			res.send(result);
+		});
+
+		app.delete("/bids/:id", async (req, res) => {
+			const { id } = req.params;
+			const query = { _id: new ObjectId(id) };
+			const result = await bidsCollection.deleteOne(query);
 			res.send(result);
 		});
 
