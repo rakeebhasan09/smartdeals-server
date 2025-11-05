@@ -19,7 +19,6 @@ app.use(cors());
 app.use(express.json());
 
 const logger = (req, res, next) => {
-	console.log("Inside logger");
 	next();
 };
 
@@ -47,29 +46,28 @@ const verifyFireBaseToken = async (req, res, next) => {
 };
 
 // Verify JWT Token
-const verifyJWTToken = (req, res, next) => {
-	const authorization = req.headers.authorization;
-	if (!authorization) {
-		return res.status(401).send({ message: "Unauthorize Access Requist." });
-	}
+// const verifyJWTToken = (req, res, next) => {
+// 	const authorization = req.headers.authorization;
+// 	if (!authorization) {
+// 		return res.status(401).send({ message: "Unauthorize Access Requist." });
+// 	}
 
-	const token = authorization.split(" ")[1];
-	if (!token) {
-		return res.status(401).send({ message: "Unauthorize Access Requist." });
-	}
+// 	const token = authorization.split(" ")[1];
+// 	if (!token) {
+// 		return res.status(401).send({ message: "Unauthorize Access Requist." });
+// 	}
 
-	// JWT token verification
-	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-		if (err) {
-			return res
-				.status(401)
-				.send({ message: "Unauthorize Access Requist." });
-		}
-		console.log("After decoded", decoded);
-		req.token_email = decoded.email;
-		next();
-	});
-};
+// 	// JWT token verification
+// 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+// 		if (err) {
+// 			return res
+// 				.status(401)
+// 				.send({ message: "Unauthorize Access Requist." });
+// 		}
+// 		req.token_email = decoded.email;
+// 		next();
+// 	});
+// };
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x65kkeb.mongodb.net/?appName=Cluster0`;
 
@@ -104,7 +102,24 @@ async function run() {
 
 		// Products Related API's
 		// All Products
-		app.get("/products", verifyFireBaseToken, async (req, res) => {
+		app.get("/products", async (req, res) => {
+			// const projectFields = { title: 1, price_min: 1, price_max: 1, image: 1};
+			// const cursor = productsCollection.find().project(projectFields);
+			const email = req.query.email;
+			const query = {};
+			if (email) {
+				// if (email !== req.token_email) {
+				// 	return res
+				// 		.status(403)
+				// 		.send({ message: "Forbidden Access." });
+				// }
+				query.email = email;
+			}
+			const cursor = productsCollection.find(query);
+			const result = await cursor.toArray();
+			res.send(result);
+		});
+		app.get("/my-products", verifyFireBaseToken, async (req, res) => {
 			// const projectFields = { title: 1, price_min: 1, price_max: 1, image: 1};
 			// const cursor = productsCollection.find().project(projectFields);
 			const email = req.query.email;
@@ -148,7 +163,8 @@ async function run() {
 		});
 
 		// Add New Product
-		app.post("/products", async (req, res) => {
+		app.post("/products", verifyFireBaseToken, async (req, res) => {
+			console.log("headers in the secure axios post", req.headers);
 			const newProduct = req.body;
 			const result = await productsCollection.insertOne(newProduct);
 			res.send(result);
@@ -190,7 +206,7 @@ async function run() {
 
 		// Bid's API's
 		// Getting Bid's JWT token verification
-		app.get("/bids", verifyJWTToken, async (req, res) => {
+		app.get("/bids", verifyFireBaseToken, async (req, res) => {
 			const email = req.query.email;
 			const query = {};
 			if (email) {
