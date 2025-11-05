@@ -8,7 +8,11 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
-const serviceAccount = require("./smartdealsbyrakeeb-firebase-adminsdk.json");
+// index.js
+const decoded = Buffer.from(process.env.FIREBASE_SDK, "base64").toString(
+	"utf8"
+);
+const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
@@ -26,12 +30,14 @@ const logger = (req, res, next) => {
 const verifyFireBaseToken = async (req, res, next) => {
 	if (!req.headers.authorization) {
 		// Do not allow to go
-		return res.status(401).send({ message: "unauthorize access." });
+		return res.status(401).send({
+			message: "unauthorize access from !req.headers.authorizaton.",
+		});
 	}
 
 	const token = req.headers.authorization.split(" ")[1];
 	if (!token) {
-		return res.status(401).send({ message: "unauthorize access." });
+		return res.status(401).send({ message: "unauthorize access. !token" });
 	}
 
 	// token okay, now is time to verify token
@@ -85,7 +91,7 @@ app.get("/", (req, res) => {
 
 async function run() {
 	try {
-		await client.connect();
+		// await client.connect();
 		const database = client.db("Smart_Deals_db");
 		const productsCollection = database.collection("products");
 		const bidsCollection = database.collection("bids");
@@ -164,7 +170,6 @@ async function run() {
 
 		// Add New Product
 		app.post("/products", verifyFireBaseToken, async (req, res) => {
-			console.log("headers in the secure axios post", req.headers);
 			const newProduct = req.body;
 			const result = await productsCollection.insertOne(newProduct);
 			res.send(result);
@@ -270,10 +275,10 @@ async function run() {
 			res.send(result);
 		});
 
-		await client.db("admin").command({ ping: 1 });
-		console.log(
-			"Pinged your deployment. You successfully connected to MongoDB!"
-		);
+		// await client.db("admin").command({ ping: 1 });
+		// console.log(
+		// 	"Pinged your deployment. You successfully connected to MongoDB!"
+		// );
 	} finally {
 	}
 }
